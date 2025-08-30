@@ -1,0 +1,22 @@
+{
+  "setupassistant": [
+    {
+      "displayname": "Sample Application",
+      "file": "SampleApp.msi",
+      "hash": "sha256",
+      "url": "https://your-domain.com/bootstrap/packages/SampleApp.msi",
+      "arguments": ["/quiet", "/norestart"],
+      "type": "msi"
+    }
+  ],
+  "userland": [
+    {
+      "displayname": "User Application",
+      "file": "UserApp.nupkg",
+      "hash": "sha256", 
+      "url": "https://your-domain.com/bootstrap/packages/UserApp.nupkg",
+      "arguments": [],
+      "type": "nupkg"
+    }
+  ]
+}
