@@ -1,5 +1,5 @@
 # BootstrapMate Build Script
-# Builds and optionally signs the BootstrapMate executable for deployment
+# Builds and signs the BootstrapMate executable for deployment
 #
 # SECURITY NOTE: Code signing is REQUIRED by default for enterprise deployment
 # Use -AllowUnsigned only for development builds (NOT for production)
@@ -11,13 +11,12 @@
 
 [CmdletBinding()]
 param(
-    [switch]$Sign,
     [string]$Thumbprint,
     [ValidateSet("x64", "arm64", "both")]
     [string]$Architecture = "both",
     [switch]$Clean,
     [switch]$Test,
-    [switch]$AllowUnsigned  # Explicit flag to allow unsigned builds for development
+    [switch]$AllowUnsigned  # Explicit flag to allow unsigned builds for development only
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,9 +26,13 @@ $Global:EnterpriseCertCN = 'EmilyCarrU Intune Windows Enterprise Certificate'
 
 Write-Host "=== BootstrapMate Build Script ===" -ForegroundColor Magenta
 Write-Host "Architecture: $Architecture" -ForegroundColor Yellow
-Write-Host "Code Signing: $(if ($Sign -or !$AllowUnsigned) { 'Required' } else { 'Disabled' })" -ForegroundColor Yellow
+Write-Host "Code Signing: $(if ($AllowUnsigned) { 'DISABLED (Development Only)' } else { 'REQUIRED (Production)' })" -ForegroundColor $(if ($AllowUnsigned) { "Red" } else { "Green" })
 Write-Host "Clean Build: $Clean" -ForegroundColor Yellow
-Write-Host "Allow Unsigned: $AllowUnsigned" -ForegroundColor $(if ($AllowUnsigned) { "Red" } else { "Green" })
+if ($AllowUnsigned) {
+    Write-Host ""
+    Write-Host "⚠️  WARNING: Building unsigned executable for development only!" -ForegroundColor Red
+    Write-Host "   Unsigned builds are NOT suitable for production deployment" -ForegroundColor Red
+}
 Write-Host ""
 
 # Function to display messages with different log levels
@@ -150,7 +153,7 @@ function Invoke-SignArtifact {
 }
 
 # Function to sign executable
-function Sign-Executable {
+function Invoke-ExecutableSigning {
     param(
         [string]$FilePath,
         [System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate
