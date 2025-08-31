@@ -19,7 +19,7 @@ namespace BootstrapMate
         private static string LogDirectory = @"C:\ProgramData\ManagedBootstrap\logs";
         
         // Version in YYYY.MM.DD.HHMM format
-        private static readonly string Version = "2025.08.30.1724";
+        private static readonly string Version = "2025.08.30.1726";
 
         static bool IsRunningAsAdministrator()
         {
@@ -91,27 +91,49 @@ namespace BootstrapMate
             // Check if running as administrator
             if (!IsRunningAsAdministrator())
             {
-                Logger.Info("BootstrapMate is not running as Administrator");
+                // Immediate clear message without logger initialization noise
                 Console.WriteLine();
-                Console.WriteLine("⚠️  BootstrapMate requires administrator privileges");
-                Console.WriteLine("    Package installations need elevated access to install to Program Files,");
-                Console.WriteLine("    write to HKLM registry, install services, and manage system components.");
+                Console.WriteLine("❌ ERROR: BootstrapMate must be run as Administrator");
+                Console.WriteLine();
+                Console.WriteLine("   BootstrapMate requires elevated privileges to:");
+                Console.WriteLine("   • Install packages to Program Files");
+                Console.WriteLine("   • Write to HKLM registry keys");
+                Console.WriteLine("   • Install Windows services");
+                Console.WriteLine("   • Manage system components");
+                Console.WriteLine();
+                Console.WriteLine("   Please run BootstrapMate as Administrator, or use:");
+                Console.WriteLine($"   sudo {Path.GetFileName(Environment.ProcessPath ?? "installapplications.exe")} {string.Join(" ", args)}");
                 Console.WriteLine();
                 
-                // Attempt to restart as administrator
-                if (TryRestartAsAdministrator(args))
+                Logger.Info("BootstrapMate is not running as Administrator");
+                
+                // Ask user if they want to restart as admin
+                Console.Write("   Would you like to restart as Administrator? (y/n): ");
+                var response = Console.ReadLine()?.Trim().ToLowerInvariant();
+                
+                if (response == "y" || response == "yes")
                 {
-                    Logger.Info("Successfully launched elevated process. Exiting current instance.");
-                    return 0; // Success - elevated process will handle the work
+                    Console.WriteLine("   Attempting to restart with administrator privileges...");
+                    
+                    // Attempt to restart as administrator
+                    if (TryRestartAsAdministrator(args))
+                    {
+                        Logger.Info("Successfully launched elevated process. Exiting current instance.");
+                        return 0; // Success - elevated process will handle the work
+                    }
+                    else
+                    {
+                        Logger.Error("Failed to obtain administrator privileges. Cannot continue.");
+                        Console.WriteLine("   ❌ Failed to restart with administrator privileges.");
+                        Console.WriteLine("   Please manually run as Administrator or use sudo.");
+                        return 1; // Error - elevation failed
+                    }
                 }
                 else
                 {
-                    Logger.Error("Failed to obtain administrator privileges. Cannot continue.");
-                    Console.WriteLine("❌ Failed to obtain administrator privileges. Installation cannot continue.");
-                    Console.WriteLine();
-                    Console.WriteLine("Please run BootstrapMate as Administrator, or use:");
-                    Console.WriteLine($"  sudo {Environment.ProcessPath ?? "installapplications.exe"} {string.Join(" ", args)}");
-                    return 1; // Error - elevation failed
+                    Logger.Error("User declined to restart as administrator. Cannot continue.");
+                    Console.WriteLine("   Operation cancelled. BootstrapMate requires administrator privileges.");
+                    return 1; // Error - user declined elevation
                 }
             }
             
