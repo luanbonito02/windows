@@ -19,7 +19,7 @@ namespace BootstrapMate
         private static string LogDirectory = @"C:\ProgramData\ManagedBootstrap\logs";
         
         // Version in YYYY.MM.DD.HHMM format
-        private static readonly string Version = "2025.08.30.1726";
+        private static readonly string Version = "2025.08.30.1757";
 
         static bool IsRunningAsAdministrator()
         {
@@ -81,6 +81,14 @@ namespace BootstrapMate
 
         static int Main(string[] args)
         {
+            // Handle version request immediately without admin check or verbose logging
+            if (args.Length > 0 && (args[0].Equals("--version", StringComparison.OrdinalIgnoreCase) || 
+                                   args[0].Equals("-v", StringComparison.OrdinalIgnoreCase)))
+            {
+                Console.WriteLine(Version);
+                return 0;
+            }
+            
             // Check for verbose mode
             bool verboseMode = args.Any(arg => arg.Equals("--verbose", StringComparison.OrdinalIgnoreCase) || 
                                               arg.Equals("-v", StringComparison.OrdinalIgnoreCase));
@@ -220,12 +228,6 @@ namespace BootstrapMate
                         Console.WriteLine("  - Admin privilege escalation for elevated packages");
                         Console.WriteLine("  - Architecture-specific conditional installation");
                         Console.WriteLine("  - Registry-based status tracking for detection scripts");
-                        return 0;
-                        
-                    case "--version":
-                    case "-v":
-                        Console.WriteLine($"BootstrapMate version {Version}");
-                        Console.WriteLine("Built for Windows (.NET 9)");
                         return 0;
 
                     case "--status":
