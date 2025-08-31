@@ -12,7 +12,7 @@
     <AssemblyDescription>MDM-agnostic bootstrapping tool for Windows</AssemblyDescription>
     <AssemblyCompany>Windows Admins Open Source</AssemblyCompany>
     <AssemblyProduct>BootstrapMate</AssemblyProduct>
-    <AssemblyCopyright>Copyright © Windows Admins Open Source 2025</AssemblyCopyright>
+    <AssemblyCopyright>Windows Admins Open Source 2025</AssemblyCopyright>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <AssemblyName>installapplications</AssemblyName>

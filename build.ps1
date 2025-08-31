@@ -369,10 +369,46 @@ function Test-Build {
     }
 }
 
+# Function to update version in Program.cs
+function Update-Version {
+    $programCsPath = Join-Path $PSScriptRoot "Program.cs"
+    
+    if (-not (Test-Path $programCsPath)) {
+        throw "Program.cs not found at: $programCsPath"
+    }
+    
+    # Generate new version in YYYY.MM.DD.HHMM format
+    $newVersion = Get-Date -Format "yyyy.MM.dd.HHmm"
+    Write-Log "Updating version to: $newVersion" "INFO"
+    
+    # Read the current file content
+    $content = Get-Content $programCsPath -Raw
+    
+    # Find and replace the version line using regex
+    $pattern = 'private static readonly string Version = "[\d.]+";'
+    $replacement = "private static readonly string Version = `"$newVersion`";"
+    
+    if ($content -match $pattern) {
+        $updatedContent = $content -replace $pattern, $replacement
+        Set-Content -Path $programCsPath -Value $updatedContent -NoNewline
+        Write-Log "Version updated successfully in Program.cs" "SUCCESS"
+        return $newVersion
+    } else {
+        Write-Log "Could not find version pattern in Program.cs" "WARN"
+        return $null
+    }
+}
+
 # Main build process
 try {
     $rootPath = $PSScriptRoot
     Push-Location $rootPath
+    
+    # Update version first
+    $currentVersion = Update-Version
+    if ($currentVersion) {
+        Write-Log "Building with version: $currentVersion" "INFO"
+    }
     
     # Prerequisites check
     Write-Log "Checking prerequisites..." "INFO"

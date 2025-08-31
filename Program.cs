@@ -19,7 +19,7 @@ namespace BootstrapMate
         private static string LogDirectory = @"C:\ProgramData\ManagedBootstrap\logs";
         
         // Version in YYYY.MM.DD.HHMM format
-        private static readonly string Version = "2025.08.30.1300";
+        private static readonly string Version = "2025.08.30.1724";
 
         static bool IsRunningAsAdministrator()
         {
@@ -126,7 +126,7 @@ namespace BootstrapMate
         {
             Logger.WriteHeader($"BootstrapMate for Windows v{Version}");
             Console.WriteLine("MDM-agnostic bootstrapping tool for Windows");
-            Console.WriteLine("Copyright © Windows Admins Open Source 2025");
+            Console.WriteLine("Windows Admins Open Source 2025");
             
             // Clean up old statuses (older than 24 hours) on startup
             try
@@ -137,6 +137,17 @@ namespace BootstrapMate
             catch (Exception ex)
             {
                 Logger.Warning($"Failed to cleanup old statuses: {ex.Message}");
+            }
+            
+            // Clean up old cached packages (older than 7 days) on startup
+            try
+            {
+                CleanupOldCache(TimeSpan.FromDays(7));
+                Logger.Debug("Cleaned up old cached packages");
+            }
+            catch (Exception ex)
+            {
+                Logger.Warning($"Failed to cleanup old cache files: {ex.Message}");
             }
             
             // Parse command line arguments
@@ -323,6 +334,18 @@ namespace BootstrapMate
                 
                 // Write successful completion to registry for Intune detection
                 StatusManager.WriteSuccessfulCompletionRegistry();
+                
+                // Auto-cleanup package cache after successful completion
+                try
+                {
+                    ClearPackageCache();
+                    Logger.Info("Auto-cleanup: Package cache cleared after successful completion");
+                }
+                catch (Exception cacheEx)
+                {
+                    Logger.Warning($"Auto-cleanup: Could not clear package cache: {cacheEx.Message}");
+                    // Don't fail the entire process if cache cleanup fails
+                }
                 
                 return 0;
             }
@@ -1258,6 +1281,74 @@ namespace BootstrapMate
             catch (Exception ex)
             {
                 Logger.Warning($"Could not clear package cache: {ex.Message}");
+            }
+        }
+
+        static void CleanupOldCache(TimeSpan maxAge)
+        {
+            try
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "BootstrapMate");
+                if (!Directory.Exists(tempDir))
+                {
+                    return; // No cache directory exists
+                }
+
+                var cutoffTime = DateTime.Now - maxAge;
+                var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories);
+                int cleanedCount = 0;
+
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        var fileInfo = new FileInfo(file);
+                        if (fileInfo.LastWriteTime < cutoffTime)
+                        {
+                            File.Delete(file);
+                            cleanedCount++;
+                            Logger.Debug($"Cleaned old cache file: {Path.GetFileName(file)}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warning($"Could not delete old cache file {file}: {ex.Message}");
+                    }
+                }
+
+                // Try to remove empty directories
+                try
+                {
+                    var directories = Directory.GetDirectories(tempDir, "*", SearchOption.AllDirectories);
+                    foreach (var dir in directories.OrderByDescending(d => d.Length)) // Delete deepest first
+                    {
+                        try
+                        {
+                            if (!Directory.EnumerateFileSystemEntries(dir).Any())
+                            {
+                                Directory.Delete(dir);
+                                Logger.Debug($"Removed empty cache directory: {dir}");
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore errors when removing empty directories
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore directory cleanup errors
+                }
+
+                if (cleanedCount > 0)
+                {
+                    Logger.Debug($"Cleaned up {cleanedCount} old cache files (older than {maxAge.TotalDays:F1} days)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warning($"Could not cleanup old cache files: {ex.Message}");
             }
         }
 
