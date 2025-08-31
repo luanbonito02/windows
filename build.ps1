@@ -1,5 +1,13 @@
 # BootstrapMate Build Script
 # Builds and optionally signs the BootstrapMate executable for deployment
+#
+# SECURITY NOTE: Code signing is REQUIRED by default for enterprise deployment
+# Use -AllowUnsigned only for development builds (NOT for production)
+#
+# Examples:
+#   .\build.ps1                          # Build with signing (certificate auto-detected)
+#   .\build.ps1 -Thumbprint "ABC123..."  # Build with specific certificate
+#   .\build.ps1 -AllowUnsigned           # Development build without signing (NOT for production)
 
 [CmdletBinding()]
 param(
@@ -8,7 +16,8 @@ param(
     [ValidateSet("x64", "arm64", "both")]
     [string]$Architecture = "both",
     [switch]$Clean,
-    [switch]$Test
+    [switch]$Test,
+    [switch]$AllowUnsigned  # Explicit flag to allow unsigned builds for development
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,8 +27,9 @@ $Global:EnterpriseCertCN = 'EmilyCarrU Intune Windows Enterprise Certificate'
 
 Write-Host "=== BootstrapMate Build Script ===" -ForegroundColor Magenta
 Write-Host "Architecture: $Architecture" -ForegroundColor Yellow
-Write-Host "Code Signing: $Sign" -ForegroundColor Yellow
+Write-Host "Code Signing: $(if ($Sign -or !$AllowUnsigned) { 'Required' } else { 'Disabled' })" -ForegroundColor Yellow
 Write-Host "Clean Build: $Clean" -ForegroundColor Yellow
+Write-Host "Allow Unsigned: $AllowUnsigned" -ForegroundColor $(if ($AllowUnsigned) { "Red" } else { "Green" })
 Write-Host ""
 
 # Function to display messages with different log levels
@@ -297,7 +307,7 @@ function Build-Architecture {
         $sizeMB = [math]::Round($fileInfo.Length / 1MB, 2)
         Write-Log "Build successful: $($fileInfo.Name) ($sizeMB MB)" "SUCCESS"
         
-        # Sign the executable if certificate is provided
+        # Sign the executable - MANDATORY unless explicitly disabled
         if ($SigningCert) {
             # Check for ARM64 system building x64 - fix ownership issue
             $isARM64System = (Get-WmiObject -Class Win32_Processor | Select-Object -First 1).Architecture -eq 12
@@ -320,7 +330,9 @@ function Build-Architecture {
                 return $false
             }
         } else {
-            Write-Log "Skipping code signing (no certificate)" "WARN"
+            # This should only happen with -AllowUnsigned flag
+            Write-Log "UNSIGNED BUILD: This executable is NOT suitable for production deployment" "WARN"
+            Write-Log "Unsigned builds should only be used for development and testing" "WARN"
         }
         
         return $true
@@ -420,15 +432,28 @@ try {
     $dotnetVersion = & dotnet --version
     Write-Log "Using .NET version: $dotnetVersion" "INFO"
     
-    # Handle signing certificate
+    # Handle signing certificate - Code signing is REQUIRED unless explicitly disabled
     $signingCert = $null
-    if ($Sign) {
+    $requireSigning = -not $AllowUnsigned
+    
+    if ($requireSigning) {
+        Write-Log "Code signing is REQUIRED for production builds" "INFO"
         Test-SignTool
         $signingCert = Get-SigningCertificate -Thumbprint $Thumbprint
         if (-not $signingCert) {
-            Write-Log "Code signing requested but no certificate available" "ERROR"
-            throw "Cannot proceed with signing - certificate not found"
+            Write-Log "CRITICAL ERROR: Code signing certificate not found!" "ERROR"
+            Write-Log "BootstrapMate MUST be signed for enterprise deployment" "ERROR"
+            Write-Log "" "ERROR"
+            Write-Log "Solutions:" "ERROR"
+            Write-Log "1. Install your enterprise code signing certificate" "ERROR"
+            Write-Log "2. Specify certificate thumbprint with -Thumbprint parameter" "ERROR"
+            Write-Log "3. For development only: use -AllowUnsigned flag (NOT for production)" "ERROR"
+            throw "Code signing certificate required but not found. Cannot build unsigned executable for production."
         }
+        Write-Log "Code signing certificate found and verified" "SUCCESS"
+    } else {
+        Write-Log "WARNING: Building unsigned executable for development only" "WARN"
+        Write-Log "NEVER deploy unsigned builds to production environments" "WARN"
     }
     
     # Build for requested architectures
@@ -481,7 +506,11 @@ try {
                     }
                 }
                 
-                $signStatus = if ($signingCert) { if ($isSigned) { " [SIGNED]" } else { " [UNSIGNED]" } } else { "" }
+                $signStatus = if ($signingCert) { 
+                    if ($isSigned) { " [SIGNED ✓]" } else { " [SIGN FAILED ❌]" } 
+                } else { 
+                    " [UNSIGNED ⚠️ DEV ONLY]" 
+                }
                 Write-Log "✅ $($result.Architecture): $($result.Path) ($sizeMB MB)$signStatus" "SUCCESS"
             } else {
                 Write-Log "✅ $($result.Architecture): Built successfully" "SUCCESS"
